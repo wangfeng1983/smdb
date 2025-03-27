@@ -1,0 +1,3 @@
+D:/2025/smdb/cmake-build-debug/CMakeFiles/smdb.dir
+D:/2025/smdb/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/2025/smdb/cmake-build-debug/CMakeFiles/rebuild_cache.dir
