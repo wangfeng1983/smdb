@@ -6,7 +6,7 @@ if(NOT DEFINED SMDB_SOURCE_DIR)
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
-add_subdirectory(libs)
+#add_subdirectory(libs)
 
 add_executable(smdb main.cpp)
 
