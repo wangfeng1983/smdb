@@ -1,4 +1,1 @@
-# 将本目录下的所有文件全部编译成静态库
-aux_source_directory(. LIB_SRC)
-
-add_library(libs ${LIB_SRC})
+add_subdirectory(lockmgr)
