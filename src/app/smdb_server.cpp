@@ -16,14 +16,14 @@ Result<void> SmdbServerApp::onInitialize() {
     // Load configuration
     auto config_result = loadConfiguration();
     if (!config_result) {
-        return std::unexpected("Failed to load configuration: " +
+        return Result<void>("Failed to load configuration: " +
                               config_result.error());
     }
 
     // Create database instance
     auto db_result = DatabaseFactory::create(getConfig().db_config);
     if (!db_result) {
-        return std::unexpected("Failed to create database: " +
+        return Result<void>("Failed to create database: " +
                               db_result.error());
     }
 
@@ -32,14 +32,14 @@ Result<void> SmdbServerApp::onInitialize() {
     // Initialize database
     auto init_result = database_->initialize();
     if (!init_result) {
-        return std::unexpected("Failed to initialize database: " +
+        return Result<void>("Failed to initialize database: " +
                               init_result.error());
     }
 
     // Start database
     auto start_result = database_->start();
     if (!start_result) {
-        return std::unexpected("Failed to start database: " +
+        return Result<void>("Failed to start database: " +
                               start_result.error());
     }
 

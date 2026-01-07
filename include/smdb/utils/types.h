@@ -9,7 +9,7 @@
 #include <memory>
 #include <chrono>
 #include <concepts>
-#include <expected>
+// #include <expected>  // C++23 only, use custom Result instead
 
 namespace smdb {
 
@@ -65,9 +65,155 @@ using Value = std::variant<
     std::chrono::system_clock::time_point // Timestamp
 >;
 
-// ===== Result Type =====
+// Forward declaration for Result<void>
 template<typename T>
-using Result = std::expected<T, std::string>;
+class Result;
+
+// ===== Result Type (C++20 compatible alternative to std::expected) =====
+
+// Specialization for void return type
+template<>
+class Result<void> {
+private:
+    std::variant<std::monostate, std::string> value_;
+
+public:
+    // Constructors for success case
+    Result(std::monostate) : value_(std::monostate{}) {}
+    Result() : value_(std::monostate{}) {}
+
+    // Constructor for error case
+    Result(std::string error) : value_(std::move(error)) {}
+    Result(const char* error) : value_(std::string(error)) {}
+
+    // Check if result holds a value
+    bool has_value() const noexcept {
+        return std::holds_alternative<std::monostate>(value_);
+    }
+
+    explicit operator bool() const noexcept {
+        return has_value();
+    }
+
+    // Get error message
+    const std::string& error() const & {
+        return std::get<std::string>(value_);
+    }
+
+    std::string&& error() && {
+        return std::get<std::string>(std::move(value_));
+    }
+};
+
+// General Result template
+template<typename T>
+class Result {
+private:
+    std::variant<T, std::string> value_;
+
+public:
+    // Constructors for success case (enable_if to disallow string)
+    template<typename U = T,
+             typename std::enable_if<!std::is_same<U, std::string>::value &&
+                                     !std::is_same<U, const char*>::value, int>::type = 0>
+    Result(U&& value) : value_(std::forward<U>(value)) {}
+
+    // Constructor for error case (explicit for string types)
+    explicit Result(std::string error) : value_(std::move(error)) {}
+    explicit Result(const char* error) : value_(std::string(error)) {}
+
+    // Copy and move
+    Result(const Result&) = default;
+    Result(Result&&) noexcept = default;
+    Result& operator=(const Result&) = default;
+    Result& operator=(Result&&) noexcept = default;
+
+    // Check if result holds a value
+    bool has_value() const noexcept {
+        return std::holds_alternative<T>(value_);
+    }
+
+    explicit operator bool() const noexcept {
+        return has_value();
+    }
+
+    // Get the value (undefined if error)
+    const T& operator*() const & {
+        return std::get<T>(value_);
+    }
+
+    T& operator*() & {
+        return std::get<T>(value_);
+    }
+
+    T&& operator*() && {
+        return std::get<T>(std::move(value_));
+    }
+
+    const T&& operator*() const&& {
+        return std::get<T>(std::move(value_));
+    }
+
+    // Get value or throw if error
+    T& value() & {
+        if (!has_value()) {
+            throw std::runtime_error(std::get<std::string>(value_));
+        }
+        return std::get<T>(value_);
+    }
+
+    const T& value() const & {
+        if (!has_value()) {
+            throw std::runtime_error(std::get<std::string>(value_));
+        }
+        return std::get<T>(value_);
+    }
+
+    T&& value() && {
+        if (!has_value()) {
+            throw std::runtime_error(std::get<std::string>(value_));
+        }
+        return std::get<T>(std::move(value_));
+    }
+
+    // Get error message
+    const std::string& error() const & {
+        return std::get<std::string>(value_);
+    }
+
+    std::string&& error() && {
+        return std::get<std::string>(std::move(value_));
+    }
+};
+
+// Helper to create unexpected results (similar to std::unexpected)
+struct Unexpected {
+    std::string message;
+    explicit Unexpected(std::string msg) : message(std::move(msg)) {}
+    explicit Unexpected(const char* msg) : message(msg) {}
+};
+
+// Macro to simplify error returns
+#define SMDB_ERROR(type, msg) Result<type>(std::string(msg))
+
+// Convenience helpers
+template<typename T>
+Result<T> success(T value) {
+    return Result<T>(std::move(value));
+}
+
+inline Result<void> success() {
+    return Result<void>(std::monostate{});
+}
+
+template<typename T>
+Result<T> failure(std::string message) {
+    return Result<T>(std::move(message));
+}
+
+inline Result<void> failure(std::string message) {
+    return Result<void>(std::move(message));
+}
 
 // ===== Error Handling =====
 struct Error {

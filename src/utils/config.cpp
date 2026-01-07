@@ -14,7 +14,7 @@ namespace smdb {
 Result<void> ConfigManager::loadFromFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        return std::unexpected("Failed to open config file: " + filename);
+        return Result<void>("Failed to open config file: " + filename);
     }
 
     std::stringstream buffer;
@@ -24,7 +24,7 @@ Result<void> ConfigManager::loadFromFile(const std::string& filename) {
     // Parse JSON (simplified)
     auto parser_result = SimpleJsonParser::parse(buffer.str());
     if (!parser_result) {
-        return std::unexpected("Failed to parse config file: " + parser_result.error());
+        return Result<void>("Failed to parse config file: " + parser_result.error());
     }
 
     *this = parser_result.value();
@@ -137,7 +137,7 @@ bool ConfigManager::has(const std::string& key) const {
 std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& prefix) const {
     std::vector<std::string> keys;
     for (const auto& [key, value] : values_) {
-        if (key.starts_with(prefix)) {
+        if (key.rfind(prefix, 0) == 0) {
             keys.push_back(key);
         }
     }
@@ -179,7 +179,7 @@ Result<ConfigManager> SimpleJsonParser::parse(const std::string& content) {
 
     // Expect '{'
     if (pos >= content.length() || content[pos] != '{') {
-        return std::unexpected("Expected '{' at start of JSON");
+        return Result<void>("Expected '{' at start of JSON");
     }
     pos++;
 
@@ -194,7 +194,7 @@ Result<ConfigManager> SimpleJsonParser::parse(const std::string& content) {
         // Parse key-value pair
         auto pair_result = parsePair(content, pos);
         if (!pair_result) {
-            return std::unexpected(pair_result.error());
+            return Result<void>(pair_result.error());
         }
 
         auto [key, value] = pair_result.value();
@@ -208,7 +208,7 @@ Result<ConfigManager> SimpleJsonParser::parse(const std::string& content) {
         } else if (content[pos] == '}') {
             break;
         } else {
-            return std::unexpected("Expected ',' or '}' after pair");
+            return Result<void>("Expected ',' or '}' after pair");
         }
     }
 
@@ -228,7 +228,7 @@ SimpleJsonParser::parsePair(const std::string& content, size_t pos) {
 
     // Expect string key
     if (pos >= content.length() || content[pos] != '"') {
-        return std::unexpected("Expected string key");
+        return Result<void>("Expected string key");
     }
 
     std::string key = parseString(content, pos);
@@ -238,7 +238,7 @@ SimpleJsonParser::parsePair(const std::string& content, size_t pos) {
 
     // Expect ':'
     if (pos >= content.length() || content[pos] != ':') {
-        return std::unexpected("Expected ':' after key");
+        return Result<void>("Expected ':' after key");
     }
     pos++;
 
@@ -247,7 +247,7 @@ SimpleJsonParser::parsePair(const std::string& content, size_t pos) {
     // Parse value
     auto value_result = parseValue(content, pos);
     if (!value_result) {
-        return std::unexpected(value_result.error());
+        return Result<void>(value_result.error());
     }
 
     return {{key, value_result.value()}};
@@ -257,7 +257,7 @@ Result<ConfigValue> SimpleJsonParser::parseValue(const std::string& content, siz
     pos = skipWhitespace(content, pos);
 
     if (pos >= content.length()) {
-        return std::unexpected("Unexpected end of input");
+        return Result<void>("Unexpected end of input");
     }
 
     char c = content[pos];
@@ -294,10 +294,10 @@ Result<ConfigValue> SimpleJsonParser::parseValue(const std::string& content, siz
         }
     } else if (c == '{' || c == '[') {
         // Object or array (not supported in this simple parser)
-        return std::unexpected("Nested objects/arrays not supported");
+        return Result<void>("Nested objects/arrays not supported");
     }
 
-    return std::unexpected("Unexpected character in value");
+    return Result<void>("Unexpected character in value");
 }
 
 std::string SimpleJsonParser::parseString(const std::string& content, size_t pos) {

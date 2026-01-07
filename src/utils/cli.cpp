@@ -53,7 +53,7 @@ Result<void> CommandLineParser::parse(int argc, char* argv[]) {
             // Long option
             auto arg_info = findArg(arg);
             if (!arg_info) {
-                return std::unexpected("Unknown option: " + arg);
+                return Result<void>("Unknown option: " + arg);
             }
 
             if (arg_info->flag) {
@@ -61,7 +61,7 @@ Result<void> CommandLineParser::parse(int argc, char* argv[]) {
             } else {
                 // Option requires a value
                 if (i + 1 >= argc) {
-                    return std::unexpected("Option " + arg + " requires a value");
+                    return Result<void>("Option " + arg + " requires a value");
                 }
                 values_[arg_info->name] = argv[++i];
             }
@@ -70,7 +70,7 @@ Result<void> CommandLineParser::parse(int argc, char* argv[]) {
             // Short option
             auto arg_info = findArg(arg);
             if (!arg_info) {
-                return std::unexpected("Unknown option: " + arg);
+                return Result<void>("Unknown option: " + arg);
             }
 
             if (arg_info->flag) {
@@ -78,7 +78,7 @@ Result<void> CommandLineParser::parse(int argc, char* argv[]) {
             } else {
                 // Option requires a value
                 if (i + 1 >= argc) {
-                    return std::unexpected("Option " + arg + " requires a value");
+                    return Result<void>("Option " + arg + " requires a value");
                 }
                 values_[arg_info->name] = argv[++i];
             }
@@ -92,7 +92,7 @@ Result<void> CommandLineParser::parse(int argc, char* argv[]) {
     // Check required arguments
     for (const auto& arg : arguments_) {
         if (arg.required && !has(arg.name)) {
-            return std::unexpected("Required option not specified: " +
+            return Result<void>("Required option not specified: " +
                                   arg.long_name);
         }
     }

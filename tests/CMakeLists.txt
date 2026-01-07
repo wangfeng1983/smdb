@@ -7,10 +7,12 @@ if(NOT GTest_FOUND)
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG release-1.12.1
+        GIT_TAG v1.14.0
     )
     # For Windows: Prevent overriding parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    # Don't let gtest override C++ standard
+    set(CMAKE_CXX_STANDARD_CACHE 21 CACHE STRING "C++ standard" FORCE)
     FetchContent_MakeAvailable(googletest)
 endif()
 
@@ -18,6 +20,7 @@ endif()
 add_executable(memorydb_tests
     main.cpp
     test_database.cpp
+    test_mem_manager.cpp
 )
 
 target_link_libraries(memorydb_tests

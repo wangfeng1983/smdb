@@ -75,7 +75,7 @@ Result<void> ApplicationBase::loadConfigFile() {
     ConfigManager config_mgr;
     auto result = config_mgr.loadFromFile(config_.config_file);
     if (!result) {
-        return std::unexpected("Failed to load config file: " + result.error());
+        return Result<void>("Failed to load config file: " + result.error());
     }
 
     // Override database config from file if present
@@ -204,7 +204,7 @@ Result<void> ToolApplication::onBeforeLoop() {
     int ret = executeTool();
     stop();
     if (ret != 0) {
-        return std::unexpected("Tool returned error code: " + std::to_string(ret));
+        return Result<void>("Tool returned error code: " + std::to_string(ret));
     }
     return {};
 }
